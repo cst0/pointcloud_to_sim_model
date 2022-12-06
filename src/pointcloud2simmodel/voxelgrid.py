@@ -5,10 +5,10 @@ import numpy as np
 import rospy
 from sensor_msgs.msg import PointCloud2
 
-from pointcloud2simmodel.utils import cloud_to_array, rgb_from_pointcloud2
+from pointcloud2simmodel.utils import cloud_to_array
 
 # TODO: allow setting these values via rosparam
-DEFAULT_STEP_SIZE = 0.1
+DEFAULT_STEP_SIZE = 0.005 # 1cm/2
 assert DEFAULT_STEP_SIZE > 0
 MAX_SEGMENT_SIZE = 100000
 
@@ -75,9 +75,9 @@ class VoxelGrid:
         self.grid = np.full(
             (self.x_steps, self.y_steps, self.z_steps), False, dtype=bool
         )
-        self.colors = np.full(
-            (self.x_steps, self.y_steps, self.z_steps, 3), 0, dtype=int
-        )
+        #self.colors = np.full(
+        #    (self.x_steps, self.y_steps, self.z_steps, 3), 0, dtype=int
+        #)
         rospy.loginfo("Voxel grid created")
 
     def volume(self) -> int:
@@ -90,7 +90,7 @@ class VoxelGrid:
 
         try:
             self.grid[x_index][y_index][z_index] = True
-            self.colors[x_index][y_index][z_index] = color
+            #self.colors[x_index][y_index][z_index] = color
         except IndexError:
             rospy.logwarn(
                 "Point ({}, {}, {}) out of bounds, index ({}, {}, {}) of possible ({}, {}, {})".format(
@@ -114,7 +114,7 @@ class VoxelGrid:
     def from_pointcloud2(self, cloud: PointCloud2) -> None:
         rospy.loginfo("Populating voxel grid from pointcloud2")
         arr = cloud_to_array(cloud)
-        colors = rgb_from_pointcloud2(cloud)
+        #colors = rgb_from_pointcloud2(cloud)
         min_x = np.min(arr[:, 0])  # type: ignore
         min_y = np.min(arr[:, 1])  # type: ignore
         min_z = np.min(arr[:, 2])  # type: ignore
@@ -132,7 +132,7 @@ class VoxelGrid:
 
         for i in range(len(arr)):
             x, y, z = arr[i]
-            self.populate_point(x, y, z, colors[i])
+            self.populate_point(x, y, z)
 
     def segment(self) -> List["VoxelGrid"]:
         rospy.loginfo("Segmenting voxel grid")
