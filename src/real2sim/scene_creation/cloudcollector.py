@@ -6,14 +6,15 @@ import rospy
 from sensor_msgs.msg import PointCloud2
 from std_srvs.srv import Trigger, TriggerResponse
 
-from pointcloud2simmodel.utils import (
+from real2sim.scene_creation.utils import (
     cloud_to_array,
     prune_points,
 )
 
-from pointcloud2simmodel.voxelgrid import VoxelGrid
-from pointcloud2simmodel.generator import SdfStlGenerator
-from pointcloud2simmodel.spawner import PybulletSpawner
+from real2sim.scene_creation.voxelgrid import VoxelGrid
+from real2sim.scene_creation.generator import SdfStlGenerator
+from real2sim.scene_creation.spawner import PybulletSpawner
+
 
 class PointCloud2Collector:
     def __init__(self, topic_name) -> None:
@@ -23,6 +24,7 @@ class PointCloud2Collector:
         self.srv = rospy.Service(
             f"{self.topic_name}_to_sdf", Trigger, self.service_callback
         )
+        self.physics_client = None
 
     def callback(self, cloud) -> None:
         self.cloud = cloud
@@ -50,6 +52,7 @@ class PointCloud2Collector:
             generator = SdfStlGenerator(v)  # TODO: allow selection via parameter
             generator.write()
             spawner = PybulletSpawner()
+            self.physics_client = spawner.client
             spawner.spawn(generator)
 
         return TriggerResponse(True, "SDF generated and spawned")

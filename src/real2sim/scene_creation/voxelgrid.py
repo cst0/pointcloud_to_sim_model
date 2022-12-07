@@ -5,7 +5,7 @@ import numpy as np
 import rospy
 from sensor_msgs.msg import PointCloud2
 
-from pointcloud2simmodel.utils import cloud_to_array
+from real2sim.scene_creation.utils import cloud_to_array
 
 # TODO: allow setting these values via rosparam
 DEFAULT_STEP_SIZE = 0.005 # 1cm/2

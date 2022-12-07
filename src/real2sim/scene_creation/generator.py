@@ -6,8 +6,8 @@ import numpy as np
 import rospy
 import abc
 
-from pointcloud2simmodel.voxelgrid import VoxelGrid
-from pointcloud2simmodel.templates import (
+from real2sim.scene_creation.voxelgrid import VoxelGrid
+from real2sim.scene_creation.templates import (
     SDF_HEADER,
     URDF_HEADER,
     SDF_FOOTER,

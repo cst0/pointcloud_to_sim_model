@@ -8,7 +8,7 @@ try:
 except ImportError:
     rospy.logwarn("pybullet not installed, cannot spawn models with this strategy")
 
-from generator import Generator
+from real2sim.scene_creation.generator import Generator
 
 
 class Spawner(object):
