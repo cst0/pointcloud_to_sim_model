@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import rospy
-from pointcloud2simmodel.cloudcollector import PointCloud2Collector
+from real2sim.scene_creation.cloudcollector import PointCloud2Collector
 
 if __name__ == "__main__":
     rospy.init_node("pointcloud2_to_sdf")
