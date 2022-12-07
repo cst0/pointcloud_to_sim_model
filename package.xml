@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>pointcloud_to_sim_model</name>
+  <name>real2sim</name>
   <version>0.1.0</version>
   <description>Package to convert point cloud data to simulated solids</description>
 
