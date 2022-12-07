@@ -41,12 +41,13 @@ class IgnitionSpawner(Spawner):
 
 class PybulletSpawner(Spawner):
     def spawn(self, generator: Generator):
+        client = None
         openfile = generator.get_file()
         try:
             import pybullet as p
             import pybullet_data
 
-            p.connect(p.GUI)
+            client = p.connect(p.GUI)
             p.setAdditionalSearchPath(pybullet_data.getDataPath())
             p.setGravity(0, 0, -9.8)
             p.loadURDF("plane.urdf")
@@ -58,3 +59,8 @@ class PybulletSpawner(Spawner):
             rospy.logerr(f"Error spawning model: {e}")
         finally:
             generator.close_file()
+
+        if client is not None:
+            return client
+        else:
+            return None
