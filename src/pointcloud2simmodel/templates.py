@@ -87,3 +87,10 @@ SDF_FOOTER = """
 </sdf>
 """
 
+URDF_HEADER = """<?xml version='1.0'?>
+<robot name="$MODEL_NAME">
+"""
+
+URDF_FOOTER = """
+</robot>
+"""

@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-import os
 import tempfile
 import progressbar
 
 import numpy as np
 import rospy
+import abc
 
 from pointcloud2simmodel.voxelgrid import VoxelGrid
 from pointcloud2simmodel.templates import (
     SDF_HEADER,
+    URDF_HEADER,
     SDF_FOOTER,
+    URDF_FOOTER,
     SDF_STL_LINK,
     SDF_BOX_JOINT,
     SDF_BOX_LINK,
@@ -22,7 +24,16 @@ SAFETY_SPACING = 0.01
 assert SAFETY_SPACING >= 0
 
 
-class StlGenerator:
+class Generator(object):
+    @abc.abstractmethod
+    def get_file():
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def close_file():
+        raise NotImplementedError
+
+class SdfStlGenerator(Generator):
     def __init__(self, voxelgrid: VoxelGrid):
         self.voxelgrid = voxelgrid
         self.openfile_stl = tempfile.NamedTemporaryFile(
@@ -32,7 +43,7 @@ class StlGenerator:
             mode="w", suffix=".sdf", delete=False
         )
 
-    def write(self) -> None:
+    def write_stl(self) -> None:
         self.openfile_stl.write("solid\n")
         for x in range(self.voxelgrid.x_steps):
             for y in range(self.voxelgrid.y_steps):
@@ -42,7 +53,8 @@ class StlGenerator:
         self.openfile_stl.write("endsolid\n")
         self.openfile_stl.flush()
 
-        # now that we have the stl file, write the sdf file
+    def write(self) -> None:
+        self.write_stl()
         self.openfile_sdf.write(SDF_HEADER.replace("$MODEL_NAME", "voxelgrid"))
         self.openfile_sdf.write(
             SDF_STL_LINK.replace(
@@ -127,24 +139,29 @@ class StlGenerator:
         self.openfile_stl.write("endloop\n")
         self.openfile_stl.write("endfacet\n")
 
-    def spawn_model(self):
-        try:
-            cmd = "rosrun gazebo_ros spawn_model -sdf -model {} -file {}".format(
-                self.openfile_sdf.name.split("/")[-1].split(".")[0],
-                self.openfile_sdf.name,
-            )
-            rospy.loginfo(f"Running command: {cmd}")
-            os.system(cmd)
-        except Exception as e:
-            rospy.logerr(f"Error spawning model: {e}")
-        finally:
-            self.openfile_sdf.close()
-            self.openfile_stl.close()
-            os.remove(self.openfile_sdf.name)
-            os.remove(self.openfile_stl.name)
+    def get_file(self):
+        return self.openfile_sdf
+
+    def close_file(self):
+        self.openfile_stl.close()
+        self.openfile_sdf.close()
 
 
-class SdfGenerator:
+class UrdfBoxGenerator(SdfStlGenerator):
+    def write(self) -> None:
+        self.write_stl()
+        self.openfile_sdf.write(URDF_HEADER.replace("$MODEL_NAME", "voxelgrid"))
+        self.openfile_sdf.write(
+            SDF_STL_LINK.replace(
+                "$NAME", self.openfile_stl.name.split("/")[-1].split(".")[0]
+            ).replace("$FILE", self.openfile_stl.name)
+        )
+        self.openfile_sdf.write(URDF_FOOTER)
+        self.openfile_sdf.flush()
+
+
+
+class SdfBoxGenerator(Generator):
     def __init__(self, vg: VoxelGrid, show_progress=False) -> None:
         self.openfile = tempfile.NamedTemporaryFile(
             mode="w", delete=False, suffix=".sdf"
@@ -228,16 +245,11 @@ class SdfGenerator:
             )
         )
 
-    def spawn_model(self):
-        try:
-            cmd = "rosrun gazebo_ros spawn_model -sdf -model {} -file {}".format(
-                self.openfile.name.split("/")[-1].split(".")[0], self.openfile.name
-            )
-            rospy.loginfo(f"Running command: {cmd}")
-            self.openfile.flush()
-            os.system(cmd)
-        except Exception as e:
-            rospy.logerr(f"Error spawning model: {e}")
-        finally:
-            self.openfile.close()
-            os.remove(self.openfile.name)
+    def get_file(self) -> str:
+        return self.openfile.name
+
+    def close_file(self) -> None:
+        self.openfile.close()
+
+    def __del__(self) -> None:
+        self.close_file()

@@ -12,8 +12,8 @@ from pointcloud2simmodel.utils import (
 )
 
 from pointcloud2simmodel.voxelgrid import VoxelGrid
-from pointcloud2simmodel.generator import StlGenerator
-
+from pointcloud2simmodel.generator import SdfStlGenerator
+from pointcloud2simmodel.spawner import PybulletSpawner
 
 class PointCloud2Collector:
     def __init__(self, topic_name) -> None:
@@ -47,9 +47,10 @@ class PointCloud2Collector:
         for v in voxels:
             rospy.loginfo(f"Voxel: {v}")
             # generator = SdfGenerator(v, show_progress=True)
-            generator = StlGenerator(v)  # TODO: allow selection via parameter
+            generator = SdfStlGenerator(v)  # TODO: allow selection via parameter
             generator.write()
-            generator.spawn_model()
+            spawner = PybulletSpawner()
+            spawner.spawn(generator)
 
         return TriggerResponse(True, "SDF generated and spawned")
 
